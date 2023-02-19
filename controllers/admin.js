@@ -1,3 +1,5 @@
+const { PromiseProvider } = require('mongoose');
+const product = require('../models/product');
 const Product = require('../models/product');
 
 exports.getAddProduct = (req, res, next) => {
@@ -33,7 +35,6 @@ exports.getEditProduct = (req, res, next) => {
     }
     const prodId = req.params.productId;
     Product.findById(prodId)
-        // Product.findById(prodId)
         .then((product) => {
             if (!product) {
                 return res.redirect('/');
@@ -55,10 +56,24 @@ exports.postEditProduct = (req, res, next) => {
     const updatedImageUrl = req.body.imageUrl;
     const updatedDesc = req.body.description;
 
-    const product = new Product(updatedTitle, updatedPrice, updatedDesc, updatedImageUrl, prodId);
-    product
-        //we can simply call product save bacause we just modified the save method to support both creation and updating
-        .save()
+    //Instead of creating a new product and calling save,
+    //I will fetch a product and I'll fetch a product by ID with the prodID
+    //add a then block and in that then block, I know I have access to my product right
+    //to the product which was fetched from database
+
+    //So now I have a setup where I first of all find the product
+    //I get back a full mongoose object hence I can manipulate it and call save again
+    Product.findById(prodId).then(product => {
+        product.title = updatedTitle;
+        product.price = updatedPrice;
+        product.imageUrl = updatedImageUrl;
+        product.description = updatedDesc;
+        // I return the result of that
+        return product
+            //we can simply call product save bacause we just modified the save method to support both creation and updating
+            .save()
+    })
+    // then call then on that to redirect once the saving was done
         .then((result) => {
             console.log('UPDATED PRODUCT!');
             res.redirect('/admin/products');
@@ -67,7 +82,7 @@ exports.postEditProduct = (req, res, next) => {
 };
 
 exports.getProducts = (req, res, next) => {
-    Product.fetchAll()
+    Product.find()
         .then((products) => {
             res.render('admin/products', {
                 prods: products,
@@ -80,7 +95,7 @@ exports.getProducts = (req, res, next) => {
 
 exports.postDeleteProduct = (req, res, next) => {
     const prodId = req.body.productId;
-    Product.deleteById(prodId)
+    Product.findByIdAndRemove(prodId)
         .then(() => {
             console.log('DESTROYED PRODUCT');
             res.redirect('/admin/products');
