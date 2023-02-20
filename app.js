@@ -18,14 +18,17 @@ const shopRoutes = require('./routes/shop');
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// app.use((req, res, next) => {
-//     User.findById('63d79776590901e4caae924c')
-//         .then((user) => {
-//             req.user = new User(user.name, user.email, user.cart, user._id);
-//             next();
-//         })
-//         .catch((err) => console.log(err));
-// });
+app.use((req, res, next) => {
+    User.findById('63f2e6c1082e4b7aec62dd39')
+    //I can simply store that user in my request and keep in mind
+    //this is a full mongoose model so we can call all these mongoose model functions 
+    //or methods on that user object and therefore also on the user object which I do store here
+        .then((user) => {
+            req.user = user;
+            next();
+        })
+        .catch((err) => console.log(err));
+});
 
 app.use('/admin', adminRoutes);
 app.use(shopRoutes);
@@ -35,6 +38,18 @@ app.use(errorController.get404);
 mongoose
     .connect('mongodb+srv://kietng:yukino103@cluster0.ycresv7.mongodb.net/shop?retryWrites=true&w=majority')
     .then((result) => {
+        User.findOne().then(user => {
+            if(!user) {
+                const user = new User({
+                    name: 'Kiet',
+                    email: 'abc@gmail.com',
+                    cart: {
+                        items: []
+                    }
+                });
+                user.save();
+            }
+        });
         app.listen(3000);
     })
     .catch((err) => {
