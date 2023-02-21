@@ -15,18 +15,24 @@ exports.postAddProduct = (req, res, next) => {
     const imageUrl = req.body.imageUrl;
     const price = req.body.price;
     const description = req.body.description;
-    const product = new Product({title: title, price: price, description: description, imageUrl: imageUrl});
+    const product = new Product({
+      title: title,
+      price: price,
+      description: description,
+      imageUrl: imageUrl,
+      userID: req.user
+    });
     product
-        .save()
-        .then((result) => {
-            // console.log(result);
-            console.log('Created Product');
-            res.redirect('/admin/products');
-        })
-        .catch((err) => {
-            console.log(err);
-        });
-};
+      .save()
+      .then(result => {
+        // console.log(result);
+        console.log('Created Product');
+        res.redirect('/admin/products');
+      })
+      .catch(err => {
+        console.log(err);
+      });
+  };
 
 exports.getEditProduct = (req, res, next) => {
     const editMode = req.query.edit;
@@ -63,17 +69,20 @@ exports.postEditProduct = (req, res, next) => {
 
     //So now I have a setup where I first of all find the product
     //I get back a full mongoose object hence I can manipulate it and call save again
-    Product.findById(prodId).then(product => {
-        product.title = updatedTitle;
-        product.price = updatedPrice;
-        product.imageUrl = updatedImageUrl;
-        product.description = updatedDesc;
-        // I return the result of that
-        return product
-            //we can simply call product save bacause we just modified the save method to support both creation and updating
-            .save()
-    })
-    // then call then on that to redirect once the saving was done
+    Product.findById(prodId)
+        .then((product) => {
+            product.title = updatedTitle;
+            product.price = updatedPrice;
+            product.imageUrl = updatedImageUrl;
+            product.description = updatedDesc;
+            // I return the result of that
+            return (
+                product
+                    //we can simply call product save bacause we just modified the save method to support both creation and updating
+                    .save()
+            );
+        })
+        // then call then on that to redirect once the saving was done
         .then((result) => {
             console.log('UPDATED PRODUCT!');
             res.redirect('/admin/products');
@@ -83,7 +92,12 @@ exports.postEditProduct = (req, res, next) => {
 
 exports.getProducts = (req, res, next) => {
     Product.find()
+    //allow you to define which fields you want to select or unselect
+        // .select('title price -_id')
+    //populate allow you to tell mongoose to populate a certain field with all the detail information and not just the ID
+        // .populate('userID', 'name')
         .then((products) => {
+            console.log(products)
             res.render('admin/products', {
                 prods: products,
                 pageTitle: 'Admin Products',
