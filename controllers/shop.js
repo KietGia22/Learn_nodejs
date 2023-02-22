@@ -108,11 +108,21 @@ exports.postOrder = (req, res, next) => {
 };
 
 exports.getOrders = (req, res, next) => {
-    Order.find({"user.userId": req.user._id}).then(order => {
-            res.render('shop/orders', {
+      let total = 0;
+      Order.find({"user.userId": req.user._id}).then(order => {
+        let sum = 0;
+        order.forEach(p => {
+          p.products.forEach(i => {
+          sum = sum + (i.product.price * i.quantity);
+          console.log(sum);
+          })
+        });
+         res.render('shop/orders', {
                 path: '/orders',
                 pageTitle: 'Your Orders',
                 orders: order,
+                total: total,
+                sum: sum 
             });
         })
         .catch((err) => console.log(err));

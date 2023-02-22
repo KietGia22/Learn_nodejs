@@ -1,5 +1,4 @@
 const { PromiseProvider } = require('mongoose');
-const product = require('../models/product');
 const Product = require('../models/product');
 
 exports.getAddProduct = (req, res, next) => {
