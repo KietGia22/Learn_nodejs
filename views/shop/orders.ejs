@@ -14,14 +14,17 @@
                             <h1>Order - # <%= order._id %></h1>
                             <ul class="orders__products">
                                 <% order.products.forEach(p => { %>
-                                    <li class="orders__products-item"><%= p.product.title %> (<%= p.quantity %>) (<%= p.product.price%>$)</li>
+                                    <li class="orders__products-item"><%= p.product.title %> (<%= p.quantity %>) (<%= p.product.price * p.quantity%>$)</li>
                                     Price: <%= total + p.product.price * p.quantity%> 
                                 <% }); %>
                             </ul>
-                            <h2>SUM: <%=sum%></h2>
+                            <% order.products.forEach(p => { %>
+                                <%sum = sum + p.product.price * p.quantity%>
+                            <% }); %>
                         </li>
                     <% }); %>
                 </ul>
+                <h1>SUM: <%= sum%></h1>
             <% } %>
         </main>
         <%- include('../includes/end.ejs') %>
