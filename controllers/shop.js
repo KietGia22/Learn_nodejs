@@ -1,4 +1,5 @@
 const Product = require('../models/product');
+const Order = require('../models/order');
 
 exports.getProducts = (req, res, next) => {
     //eachAsync allows us loop through products or next to get the next element
@@ -79,23 +80,39 @@ exports.postCartDeleteProduct = (req, res, next) => {
 };
 
 exports.postOrder = (req, res, next) => {
-    let fetchedCart;
     req.user
-        .addOrder()
-        .then((result) => {
-            res.redirect('/orders');
-        })
-        .catch((err) => console.log(err));
+    .populate('cart.items.productId')
+    .then(user => {
+      const products = user.cart.items.map(i => {
+        //which ._doc we ger really access to just the data that's in there
+        //and then with the spread operator inside of a new object
+        //we pull out all the data in that document we retrieved and store it in a new object which we save here as a product 
+        return {quantity: i.quantity, product: {...i.productId._doc}};
+      });
+      const order = new Order({
+        user: {
+            name: req.user.name,
+            userId: req.user
+        },
+        products: products
+      });
+      return order.save();
+    })
+    .then((result) => {
+        return req.user.clearCart();
+    })
+    .then(() => {
+        res.redirect('/orders');
+    })
+    .catch((err) => console.log(err));
 };
 
 exports.getOrders = (req, res, next) => {
-    req.user
-        .getOrder()
-        .then((orders) => {
+    Order.find({"user.userId": req.user._id}).then(order => {
             res.render('shop/orders', {
                 path: '/orders',
                 pageTitle: 'Your Orders',
-                orders: orders,
+                orders: order,
             });
         })
         .catch((err) => console.log(err));
